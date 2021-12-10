@@ -2,20 +2,25 @@ import  { Amaze } from "./amaze.js"
 
 const canvas = document.body.querySelector("canvas");
 const ctx = canvas.getContext("2d");
+const selectAlgo = document.body.querySelector("select");
 const scaleInput = document.body.querySelector("input#scale");
-const corridorInput = document.body.querySelector("input#corridor");
+const optionInput = document.body.querySelector("input#option");
+
 
 
 
 function mazeUpdate() {
 
     let scale = parseInt(scaleInput.value);
-    let corridor = parseInt(corridorInput.value);
+    let option = parseInt(optionInput.value);
     let width = parseInt(canvas.width / scale);
     let height = parseInt(canvas.height / scale);
+    let algorithm = document.body.querySelector("select").value;
+    
     
     let start = new Date();
-    let maze = new Amaze(width, height, "recursiveDivision", {minCorridorWidth: corridor});
+   
+    let maze = new Amaze(width, height, algorithm, option);
 
     // Draw the maze
     //
@@ -44,11 +49,13 @@ scaleInput.addEventListener("input", () => {
     mazeUpdate();
 });
 
-corridorInput.addEventListener("input", () => {
-    corridorInput.nextElementSibling.value = "x" + corridorInput.value;
+optionInput.addEventListener("input", () => {
+    optionInput.nextElementSibling.value = "x" + optionInput.value;
     mazeUpdate();
 });
 
-
+selectAlgo.addEventListener("input", () => {
+    mazeUpdate();
+});
 
 mazeUpdate();

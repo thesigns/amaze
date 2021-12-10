@@ -1,6 +1,6 @@
 /**
  * amaze.js
- * v0.1
+ * v0.2
  * Jakub Adamczyk
  * 
  */
@@ -19,9 +19,82 @@ function randomMinMax(min, max) {
  */
 let mazeAlgorithms = {
 
+
+    // FIXME: everything wrong (was supposed to be Eller's Algorithm)
+    //
+    bugsFailed(maze) {
+
+        const CELL_UNINITIALIZED = 0;
+        const CELL_WALL = 1;
+
+        // Cells with value CELL_UNINITIALIZED are uninitialized.
+        // Cells with negative value are corridor sets.
+        // Cells with value CELL_WALL are walls.
+
+        let cellNum = 1;
+        for (let y = 0; y < maze.height; y++) {
+
+            // Initialize each cell in that row.
+            //
+            for(let x = 0; x < maze.width; x++) {
+                if (maze.grid[x][y] === CELL_UNINITIALIZED) {
+                    maze.grid[x][y] = cellNum++;
+                }
+            }
+
+            // randomly join adjacent cells that belong to different sets.
+            //
+            let posJoin = 0;
+            while (posJoin < maze.width) {
+                let cellJoinNum = maze.grid[posJoin][y];
+                let joinWidth = randomMinMax(1, (maze.width - posJoin) > 6 ? 6 : (maze.width - posJoin));
+                let joinEnd = posJoin + joinWidth;
+                for (let i = posJoin; i < joinEnd; i += 1) {
+                    posJoin++;
+                    maze.grid[i][y] = cellJoinNum;
+
+                }
+                if (posJoin < maze.width) {
+
+                    maze.grid[posJoin][y] = -1;
+                }
+                posJoin++;
+            }
+
+            // randomly determine the vertical connections
+            //
+            for(let x = 0; x < maze.width; x++) {
+                if(Math.random() < maze.option / 100) {
+                    maze.grid[x][y + 1] = maze.grid[x][y];
+                }
+            }
+        }
+
+        // Fix values
+        //
+        for (let y = 0; y < maze.height; y += 1) {
+            for (let x = 0; x < maze.width; x += 1) { 
+                if (maze.grid[x][y] < 0) {
+                    maze.grid[x][y] = Amaze.WALL;
+                } else {
+                    maze.grid[x][y] = Amaze.FLOOR;
+                }
+            }
+        }
+        
+    },
+
+
+
+
+
+
+
+
+
+
     recursiveDivision(maze) {
 
-        let minCorridor = maze.options.minCorridorWidth ? maze.options.minCorridorWidth : 1;
 
         // Set outer walls
         //
@@ -35,7 +108,7 @@ let mazeAlgorithms = {
             let x2 = x + width - 1;
             let y2 = y + height - 1;
 
-            if (width <= minCorridor || height <= minCorridor) {
+            if (width <= maze.option || height <= maze.option) {
                 return;
             }
             
@@ -68,18 +141,18 @@ let mazeAlgorithms = {
         //
         for (let y = 0; y < maze.height; y += 1) {
             for (let x = 0; x < maze.width; x += 1) { 
-                if (maze.grid[x][y] === Amaze.OPENING) {
+                if (maze.grid[x][y] === Amaze.FLOOR) {
                     if (maze.grid[x + 1][y] === Amaze.WALL && maze.grid[x][y + 1] === Amaze.WALL && maze.grid[x + 1][y + 1] != Amaze.WALL) {
-                        maze.grid[x + 1][y] = Amaze.DEBUG;
+                        maze.grid[x + 1][y] = Amaze.FLOOR;
                     }
                     if (maze.grid[x + 1][y] === Amaze.WALL && maze.grid[x][y - 1] === Amaze.WALL && maze.grid[x + 1][y - 1] != Amaze.WALL) {
-                        maze.grid[x][y - 1] = Amaze.DEBUG;
+                        maze.grid[x][y - 1] = Amaze.FLOOR;
                         }
                     if (maze.grid[x][y - 1] === Amaze.WALL && maze.grid[x - 1][y] === Amaze.WALL && maze.grid[x - 1][y - 1] != Amaze.WALL) {
-                        maze.grid[x - 1][y] = Amaze.DEBUG;
+                        maze.grid[x - 1][y] = Amaze.FLOOR;
                     }
                     if (maze.grid[x - 1][y] === Amaze.WALL && maze.grid[x][y + 1] === Amaze.WALL && maze.grid[x - 1][y + 1] != Amaze.WALL) {
-                        maze.grid[x - 1][y + 1] = Amaze.DEBUG;
+                        maze.grid[x - 1][y + 1] = Amaze.FLOOR;
                     }
                 }
             }
@@ -94,7 +167,7 @@ let mazeAlgorithms = {
 
 export class Amaze {
 
-    constructor(width, height, algorithm, options) {
+    constructor(width, height, algorithm, option) {
 
         // These properties can't be changed
         //
@@ -102,7 +175,7 @@ export class Amaze {
         Object.defineProperty(this, 'height', { value: height });
         Object.defineProperty(this, 'algorithm', { value: algorithm });
 
-        this.options = Object.assign({}, options);
+        this.option = option;
 
         // Create maze grid filled with floor
         //
@@ -141,19 +214,16 @@ export class Amaze {
                 let scale = 20;
 
                 if (this.grid[x][y] === Amaze.FLOOR) {
-                    row += " ";
-                } else if (this.grid[x][y] === Amaze.WALL) {
-                    row += "#";
-                } else if (this.grid[x][y] === Amaze.OPENING) {
-                    row += ".";
-                } else if (this.grid[x][y] === Amaze.DEBUG) {
-                    row += "?";
+                    row += ".....";
+                } else if (this.grid[x][y] > Amaze.FLOOR) {
+                    row += "[" + this.grid[x][y].toLocaleString('en-US', {minimumIntegerDigits: 3, useGrouping: false}) + "]";
                 } else {
-                    row += "!";
+                    row += "#####";
                 }
             }
-            console.log(row);
+            console.log(row + "  " + y);
         }
+        console.log("");
     }
 
 }
@@ -162,3 +232,4 @@ Amaze.FLOOR = 0;
 Amaze.WALL = 1;
 Amaze.OPENING = 2;
 Amaze.DEBUG = 3;
+
