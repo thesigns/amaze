@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>amaze.js</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <script src="./js/main.js" type="module"></script>
+    </head>
+    <body>
+        <h1>amaze.js</h1>
+        <p>It's a maze... generator. You can choose any algorithm as long as it's recursive division.</p>
+        <canvas width="800" height="400"></canvas>
+        <p>
+            Algorithm:
+            <select>
+                <option value="recursiveDivision">Recursive division</option>
+            </select>
+
+            Scale:
+            <input id="scale" type="range" min="1" max="100" value="30"><output>x30</output>
+           
+            Max corridor width:
+            <input id="corridor" type="range" min="1" max="30" value="1"><output>1</output>
+
+            <span></span>
+        </p>
+    </body>
+</html>
