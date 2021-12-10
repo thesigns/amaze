@@ -15,7 +15,7 @@ function mazeUpdate() {
     let height = parseInt(canvas.height / scale);
     
     let start = new Date();
-    let maze = new Amaze(width, height, "recursiveDivision", {maxCorridorWidth: corridor});
+    let maze = new Amaze(width, height, "recursiveDivision", {minCorridorWidth: corridor});
 
     // Draw the maze
     //

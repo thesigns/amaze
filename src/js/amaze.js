@@ -21,7 +21,7 @@ let mazeAlgorithms = {
 
     recursiveDivision(maze) {
 
-        let maxCorridor = maze.options.maxCorridorWidth ? maze.options.maxCorridorWidth : 1;
+        let minCorridor = maze.options.minCorridorWidth ? maze.options.minCorridorWidth : 1;
 
         // Set outer walls
         //
@@ -35,7 +35,7 @@ let mazeAlgorithms = {
             let x2 = x + width - 1;
             let y2 = y + height - 1;
 
-            if (width <= maxCorridor || height <= maxCorridor) {
+            if (width <= minCorridor || height <= minCorridor) {
                 return;
             }
             
@@ -74,7 +74,7 @@ let mazeAlgorithms = {
                     }
                     if (maze.grid[x + 1][y] === Amaze.WALL && maze.grid[x][y - 1] === Amaze.WALL && maze.grid[x + 1][y - 1] != Amaze.WALL) {
                         maze.grid[x][y - 1] = Amaze.DEBUG;
-                    }
+                        }
                     if (maze.grid[x][y - 1] === Amaze.WALL && maze.grid[x - 1][y] === Amaze.WALL && maze.grid[x - 1][y - 1] != Amaze.WALL) {
                         maze.grid[x - 1][y] = Amaze.DEBUG;
                     }
