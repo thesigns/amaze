@@ -20,144 +20,171 @@ function randomMinMax(min, max) {
 let mazeAlgorithms = {
 
 
-    // FIXME: everything wrong (was supposed to be Eller's Algorithm)
-    //
-    bugsFailed(maze) {
 
-        const CELL_UNINITIALIZED = 0;
-        const CELL_WALL = 1;
+    recursiveBacktracking(maze) {
 
-        // Cells with value CELL_UNINITIALIZED are uninitialized.
-        // Cells with negative value are corridor sets.
-        // Cells with value CELL_WALL are walls.
+        // Fill the maze with walls and borders with special (uncarvable walls).
+        //
+        maze.setTile(Amaze.SPECIAL, 0, 0, maze.width, maze.height);
+        maze.setTile(Amaze.WALL, 1, 1, maze.width - 2, maze.height - 2);
 
-        let cellNum = 1;
-        for (let y = 0; y < maze.height; y++) {
+        // Pick a random starting point.
+        //
+        const startX = randomMinMax(1, maze.width - 2);
+        const startY = randomMinMax(1, maze.height - 2);
 
-            // Initialize each cell in that row.
-            //
-            for(let x = 0; x < maze.width; x++) {
-                if (maze.grid[x][y] === CELL_UNINITIALIZED) {
-                    maze.grid[x][y] = cellNum++;
+        let x = startX;
+        let y = startY;
+
+        // Direction values.
+        //
+        const NORTH = {x: 0, y: -1};
+        const SOUTH = {x: 0, y: 1};
+        const WEST = {x: -1, y: 0};
+        const EAST = {x: 1, y: 0};
+
+        // There is no direction of movement at start.
+        //
+        let forward = null;
+        const forwardChance = maze.option / 100;
+
+        // Used to keep track of the path and diggable walls
+        //
+        let stack = [];
+
+        function isDiggable(x, y, fromX, fromY) {
+            let countFloors = 0;
+
+            if (maze.grid[x][y - 1] === Amaze.FLOOR) {countFloors += 1; }
+            if (maze.grid[x][y + 1] === Amaze.FLOOR) { countFloors += 1; }
+            if (maze.grid[x - 1][y] === Amaze.FLOOR) { countFloors += 1; }
+            if (maze.grid[x + 1][y] === Amaze.FLOOR) { countFloors += 1; }
+
+            if (maze.grid[x - 1][y - 1] === Amaze.FLOOR) { 
+                if (Math.abs(fromX - (x - 1)) > 1 || Math.abs(fromY - (y - 1)) > 1) {
+                    countFloors += 1;    
                 }
             }
-
-            // randomly join adjacent cells that belong to different sets.
-            //
-            let posJoin = 0;
-            while (posJoin < maze.width) {
-                let cellJoinNum = maze.grid[posJoin][y];
-                let joinWidth = randomMinMax(1, (maze.width - posJoin) > 6 ? 6 : (maze.width - posJoin));
-                let joinEnd = posJoin + joinWidth;
-                for (let i = posJoin; i < joinEnd; i += 1) {
-                    posJoin++;
-                    maze.grid[i][y] = cellJoinNum;
-
-                }
-                if (posJoin < maze.width) {
-
-                    maze.grid[posJoin][y] = -1;
-                }
-                posJoin++;
-            }
-
-            // randomly determine the vertical connections
-            //
-            for(let x = 0; x < maze.width; x++) {
-                if(Math.random() < maze.option / 100) {
-                    maze.grid[x][y + 1] = maze.grid[x][y];
+            if (maze.grid[x - 1][y + 1] === Amaze.FLOOR) { 
+                if (Math.abs(fromX - (x - 1)) > 1 || Math.abs(fromY - (y + 1)) > 1) {
+                    countFloors += 1;    
                 }
             }
+            if (maze.grid[x + 1][y - 1] === Amaze.FLOOR) { 
+                if (Math.abs(fromX - (x + 1)) > 1 || Math.abs(fromY - (y - 1)) > 1) {
+                    countFloors += 1;    
+                }
+            }
+            if (maze.grid[x + 1][y + 1] === Amaze.FLOOR) { 
+                if (Math.abs(fromX - (x + 1)) > 1 || Math.abs(fromY - (y + 1)) > 1) {
+                    countFloors += 1;    
+                }
+            }
+            if (countFloors <= 1) {
+                return true;
+            }
+            return false;
         }
 
-        // Fix values
-        //
-        for (let y = 0; y < maze.height; y += 1) {
-            for (let x = 0; x < maze.width; x += 1) { 
-                if (maze.grid[x][y] < 0) {
-                    maze.grid[x][y] = Amaze.WALL;
-                } else {
-                    maze.grid[x][y] = Amaze.FLOOR;
-                }
-            }
-        }
-        
-    },
 
+        while(true) {
 
+            maze.setTile(Amaze.FLOOR, x, y, 1, 1);
 
-
-
-
-
-
-
-
-    recursiveDivision(maze) {
-
-
-        // Set outer walls
-        //
-        maze.setTile(Amaze.WALL, 0, 0, maze.width, 1);
-        maze.setTile(Amaze.WALL, 0, maze.height - 1, maze.width, 1);
-        maze.setTile(Amaze.WALL, 0, 1, 1, maze.height - 2);
-        maze.setTile(Amaze.WALL, maze.width - 1, 1, 1, maze.height - 2);
-
-        let divide = function(x, y, width, height) {
-
-            let x2 = x + width - 1;
-            let y2 = y + height - 1;
-
-            if (width <= maze.option || height <= maze.option) {
-                return;
-            }
+            // push current location at stack
+            //
+            stack.push({x: x, y: y});
             
-            // Divide vertically
+            let diggable = [];
+
+            // Collect all diggable walls
             //
-            if ((width > height) || (width === height && Math.random() < 0.5)) {
-                let divPos = randomMinMax(x + 1, x2 - 1);
-                maze.setTile(Amaze.WALL, divPos, y,  1, height);
-                let openingPos = randomMinMax(y, y2);
-                maze.setTile(Amaze.OPENING, divPos, openingPos,  1, 1);
-                divide(x, y, divPos - x, y2 - y + 1);
-                divide(divPos + 1, y, x2 - divPos, y2 - y + 1);
-
-            // Divide horizontally
-            //
-            } else {
-                let divPos = randomMinMax(y + 1, y2 - 1);
-                maze.setTile(Amaze.WALL, x, divPos,  width, 1);
-                let openingPos = randomMinMax(x, x2);
-                maze.setTile(Amaze.OPENING, openingPos, divPos, 1, 1);
-                divide(x, y, x2 - x + 1, divPos - y);
-                divide(x, divPos + 1, x2 - x + 1, y2 - divPos);
-            }
-       
-        }
-
-        divide(1, 1, maze.width - 2, maze.height - 2);
-
-        // Fix diagonal openings
-        //
-        for (let y = 0; y < maze.height; y += 1) {
-            for (let x = 0; x < maze.width; x += 1) { 
-                if (maze.grid[x][y] === Amaze.FLOOR) {
-                    if (maze.grid[x + 1][y] === Amaze.WALL && maze.grid[x][y + 1] === Amaze.WALL && maze.grid[x + 1][y + 1] != Amaze.WALL) {
-                        maze.grid[x + 1][y] = Amaze.FLOOR;
-                    }
-                    if (maze.grid[x + 1][y] === Amaze.WALL && maze.grid[x][y - 1] === Amaze.WALL && maze.grid[x + 1][y - 1] != Amaze.WALL) {
-                        maze.grid[x][y - 1] = Amaze.FLOOR;
-                        }
-                    if (maze.grid[x][y - 1] === Amaze.WALL && maze.grid[x - 1][y] === Amaze.WALL && maze.grid[x - 1][y - 1] != Amaze.WALL) {
-                        maze.grid[x - 1][y] = Amaze.FLOOR;
-                    }
-                    if (maze.grid[x - 1][y] === Amaze.WALL && maze.grid[x][y + 1] === Amaze.WALL && maze.grid[x - 1][y + 1] != Amaze.WALL) {
-                        maze.grid[x - 1][y + 1] = Amaze.FLOOR;
-                    }
+            if (maze.grid[x][y - 1] === Amaze.WALL) {
+                if (isDiggable(x, y - 1, x, y)) {
+                    diggable.push(NORTH);
                 }
             }
+            if (maze.grid[x][y + 1] === Amaze.WALL) {
+                if (isDiggable(x, y + 1, x, y)) {
+                    diggable.push(SOUTH);
+                }
+            }
+            if (maze.grid[x - 1][y] === Amaze.WALL) {
+                if (isDiggable(x - 1, y, x, y)) {
+                    diggable.push(WEST);
+                }
+            }
+            if (maze.grid[x + 1][y] === Amaze.WALL) {
+                if (isDiggable(x + 1, y, x, y)) {
+                    diggable.push(EAST);
+                }
+            }
+
+            if (diggable.length > 0) {
+                if (forward !== null && diggable.includes(forward) && forwardChance > Math.random()) {
+                    x = x + forward.x;
+                    y = y + forward.y;
+                    forward = forward;
+                } else {
+                    let rand = randomMinMax(0, diggable.length - 1);
+                    x = x + diggable[rand].x;
+                    y = y + diggable[rand].y;
+                    forward = diggable[rand];
+                }
+            } else {
+                
+                // go back
+                let back = stack.pop();
+                back = stack.pop();
+                if (stack.length == 0) {
+                    maze.setTile(Amaze.WALL, 0, 0, maze.width, 1);
+                    maze.setTile(Amaze.WALL, 0, maze.height - 1, maze.width, 1);
+                    maze.setTile(Amaze.WALL, 0, 1, 1, maze.height - 2);
+                    maze.setTile(Amaze.WALL, maze.width - 1, 1, 1, maze.height - 2);
+
+
+
+                    // open holes
+                    for (let x = 1; x < maze.width - 1; x += 1) {
+                        for (let y = 1; y < maze.height - 1; y += 1) {
+                            if(maze.grid[x][y] === Amaze.WALL) {
+                                if (maze.grid[x][y - 1] === Amaze.FLOOR && maze.grid[x][y + 1] === Amaze.FLOOR && maze.grid[x - 1][y] !== Amaze.FLOOR && maze.grid[x + 1][y] !== Amaze.FLOOR) {
+                                    if (Math.random() < maze.junctions)  {
+                                        maze.grid[x][y] = Amaze.FLOOR;
+                                    }
+                                }
+                                if (maze.grid[x][y - 1] !== Amaze.FLOOR && maze.grid[x][y + 1] !== Amaze.FLOOR && maze.grid[x - 1][y] === Amaze.FLOOR && maze.grid[x + 1][y] === Amaze.FLOOR) {
+                                    if (Math.random() < maze.junctions)  {
+                                        maze.grid[x][y] = Amaze.FLOOR;
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+
+
+
+
+
+
+
+
+
+                    return;
+                }
+                x = back.x;
+                y = back.y;
+                
+            }
+
+
         }
+
     }
+
+
 }
 
 
@@ -167,7 +194,7 @@ let mazeAlgorithms = {
 
 export class Amaze {
 
-    constructor(width, height, algorithm, option) {
+    constructor(width, height, algorithm, option, junctions) {
 
         // These properties can't be changed
         //
@@ -176,6 +203,8 @@ export class Amaze {
         Object.defineProperty(this, 'algorithm', { value: algorithm });
 
         this.option = option;
+
+        this.junctions = junctions / 100;
 
         // Create maze grid filled with floor
         //
@@ -228,8 +257,6 @@ export class Amaze {
 
 }
 
+Amaze.SPECIAL = -1;
 Amaze.FLOOR = 0;
 Amaze.WALL = 1;
-Amaze.OPENING = 2;
-Amaze.DEBUG = 3;
-

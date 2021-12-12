@@ -4,15 +4,21 @@ html {
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Roboto", Arial, Helvetica, sans-serif;
     font-size: 10pt;
     min-height: 100%;
-    background: #333;
-    color: #aaa;
+    background: hsl(0, 0%, 10%);
+    color: hsl(0, 0%, 50%);
+}
+
+* {
+    font-family: "Roboto", Arial, Helvetica, sans-serif;
 }
 
 h1 {
-    font-size: 1.4em;
+    font-size: 2.2em;
+    font-weight: 300;
+
 }
 
 canvas {
@@ -21,6 +27,7 @@ canvas {
 
 canvas + p {
     text-align: left;
+    margin-bottom: 100px;
 }
 
 select {
@@ -36,7 +43,16 @@ output {
     margin-right: 10px;
     border: 1px solid #444;
     padding: 5px;
-    min-width: 40px;
+    min-width: 25px;
+    display: inline-block;
+    text-align: center;
+}
+
+#clock {
+
+    border: 1px solid #444;
+    padding: 5px;
+    min-width: 45px;
     display: inline-block;
     text-align: center;
 }
